@@ -2,20 +2,18 @@ import 'dart:convert';
 
 /// Converts a JSON string into a [FetchGeocoder] object.
 FetchGeocoder fetchGeocoderFromJson(String str) =>
-    FetchGeocoder.fromJson(json.decode(str));
+    FetchGeocoder.fromJson(json.decode(str) as Map<String, dynamic>);
 
 /// Converts a [FetchGeocoder] object into a JSON string.
-String tetchGeocoderToJson(FetchGeocoder data) => json.encode(data.toJson());
+String fetchGeocoderToJson(FetchGeocoder data) => json.encode(data.toJson());
 
-/// Represents the response from the Google Maps Geocoding API.
-///
-/// This class contains the results of a geocoding request, including
-/// the list of matching locations and the status of the request.
+/// Backward compatibility alias for the legacy typo in fetchGeocoderToJson.
+@Deprecated('Use fetchGeocoderToJson instead')
+String tetchGeocoderToJson(FetchGeocoder data) => fetchGeocoderToJson(data);
+
+/// Represents the response from the Google Maps Geocoding API (Legacy wrapper).
 class FetchGeocoder {
   /// Creates a new instance of [FetchGeocoder].
-  ///
-  /// [results] The list of geocoding results.
-  /// [status] The status of the geocoding request.
   FetchGeocoder({required this.results, required this.status});
 
   /// The list of geocoding results matching the request.
@@ -26,29 +24,24 @@ class FetchGeocoder {
 
   /// Creates a [FetchGeocoder] instance from a JSON map.
   factory FetchGeocoder.fromJson(Map<String, dynamic> json) => FetchGeocoder(
-    results: List<Result>.from(json["results"].map((x) => Result.fromJson(x))),
-    status: json["status"],
+    results:
+        (json['results'] as List<dynamic>?)
+            ?.map((x) => Result.fromJson(x as Map<String, dynamic>))
+            .toList() ??
+        [],
+    status: (json['status'] as String?) ?? 'UNKNOWN',
   );
 
   /// Converts this instance to a JSON map.
   Map<String, dynamic> toJson() => {
-    "results": List<dynamic>.from(results.map((x) => x.toJson())),
-    "status": status,
+    'results': results.map((x) => x.toJson()).toList(),
+    'status': status,
   };
 }
 
 /// Represents a single geocoding result from the Google Maps API.
-///
-/// Contains detailed information about a location, including its address
-/// components, formatted address, geometry, and place ID.
 class Result {
   /// Creates a new instance of [Result].
-  ///
-  /// [addressComponents] The list of address components.
-  /// [formattedAddress] The complete formatted address.
-  /// [geometry] The geographical information of the location.
-  /// [placeId] The unique identifier for the place.
-  /// [types] The types of location this result represents.
   Result({
     required this.addressComponents,
     required this.formattedAddress,
@@ -69,42 +62,43 @@ class Result {
   /// The unique identifier for this place in the Google Places database.
   String placeId;
 
-  /// The types of location this result represents (e.g., "street_address", "locality").
+  /// The types of location this result represents.
   List<String> types;
 
   /// Creates a [Result] instance from a JSON map.
   factory Result.fromJson(Map<String, dynamic> json) => Result(
-    addressComponents: List<AddressComponent>.from(
-      json["address_components"].map((x) => AddressComponent.fromJson(x)),
-    ),
-    formattedAddress: json["formatted_address"],
-    geometry: Geometry.fromJson(json["geometry"]),
-    placeId: json["place_id"],
-    types: List<String>.from(json["types"].map((x) => x)),
+    addressComponents:
+        (json['address_components'] as List<dynamic>?)
+            ?.map((x) => AddressComponent.fromJson(x as Map<String, dynamic>))
+            .toList() ??
+        [],
+    formattedAddress: (json['formatted_address'] as String?) ?? '',
+    geometry:
+        json['geometry'] != null
+            ? Geometry.fromJson(json['geometry'] as Map<String, dynamic>)
+            : Geometry(
+              location: Location(lat: 0, lng: 0),
+              locationType: LocationType.approximate,
+            ),
+    placeId: (json['place_id'] as String?) ?? '',
+    types:
+        (json['types'] as List<dynamic>?)?.map((x) => x.toString()).toList() ??
+        [],
   );
 
   /// Converts this instance to a JSON map.
   Map<String, dynamic> toJson() => {
-    "address_components": List<dynamic>.from(
-      addressComponents.map((x) => x.toJson()),
-    ),
-    "formatted_address": formattedAddress,
-    "geometry": geometry.toJson(),
-    "place_id": placeId,
-    "types": List<dynamic>.from(types.map((x) => x)),
+    'address_components': addressComponents.map((x) => x.toJson()).toList(),
+    'formatted_address': formattedAddress,
+    'geometry': geometry.toJson(),
+    'place_id': placeId,
+    'types': types,
   };
 }
 
-/// Represents a component of an address (e.g., street number, city, country).
-///
-/// Each address component has a long name, short name, and types that describe
-/// what kind of component it is.
+/// Represents a component of an address.
 class AddressComponent {
   /// Creates a new instance of [AddressComponent].
-  ///
-  /// [longName] The full name of the component.
-  /// [shortName] The abbreviated name of the component.
-  /// [types] The types of this address component.
   AddressComponent({
     required this.longName,
     required this.shortName,
@@ -117,63 +111,61 @@ class AddressComponent {
   /// The abbreviated name of the address component.
   String shortName;
 
-  /// The types of this address component (e.g., "street_number", "route").
+  /// The types of this address component.
   List<String> types;
 
   /// Creates an [AddressComponent] instance from a JSON map.
   factory AddressComponent.fromJson(Map<String, dynamic> json) =>
       AddressComponent(
-        longName: json["long_name"],
-        shortName: json["short_name"],
-        types: List<String>.from(json["types"].map((x) => x)),
+        longName: (json['long_name'] as String?) ?? '',
+        shortName: (json['short_name'] as String?) ?? '',
+        types:
+            (json['types'] as List<dynamic>?)
+                ?.map((x) => x.toString())
+                .toList() ??
+            [],
       );
 
   /// Converts this instance to a JSON map.
   Map<String, dynamic> toJson() => {
-    "long_name": longName,
-    "short_name": shortName,
-    "types": List<dynamic>.from(types.map((x) => x)),
+    'long_name': longName,
+    'short_name': shortName,
+    'types': types,
   };
 }
 
 /// Represents the geographical information of a location.
-///
-/// Contains the location coordinates and the type of location (e.g., rooftop,
-/// geometric center).
 class Geometry {
   /// Creates a new instance of [Geometry].
-  ///
-  /// [location] The coordinates of the location.
-  /// [locationType] The type of location.
   Geometry({required this.location, required this.locationType});
 
   /// The coordinates of the location.
   Location location;
 
-  /// The type of location (e.g., rooftop, geometric center).
+  /// The type of location.
   LocationType locationType;
 
   /// Creates a [Geometry] instance from a JSON map.
   factory Geometry.fromJson(Map<String, dynamic> json) => Geometry(
-    location: Location.fromJson(json["location"]),
-    locationType: locationTypeValues.map[json["location_type"]],
+    location:
+        json['location'] != null
+            ? Location.fromJson(json['location'] as Map<String, dynamic>)
+            : Location(lat: 0, lng: 0),
+    locationType:
+        locationTypeValues.map[json['location_type']] ??
+        LocationType.approximate,
   );
 
   /// Converts this instance to a JSON map.
   Map<String, dynamic> toJson() => {
-    "location": location.toJson(),
-    "location_type": locationTypeValues.reverse[locationType],
+    'location': location.toJson(),
+    'location_type': locationTypeValues.reverse[locationType],
   };
 }
 
 /// Represents a viewport (bounding box) for a location.
-///
-/// Contains the northeast and southwest corners of the bounding box.
 class Viewport {
   /// Creates a new instance of [Viewport].
-  ///
-  /// [northeast] The northeast corner of the viewport.
-  /// [southwest] The southwest corner of the viewport.
   Viewport({required this.northeast, required this.southwest});
 
   /// The northeast corner of the viewport.
@@ -184,23 +176,26 @@ class Viewport {
 
   /// Creates a [Viewport] instance from a JSON map.
   factory Viewport.fromJson(Map<String, dynamic> json) => Viewport(
-    northeast: Location.fromJson(json["northeast"]),
-    southwest: Location.fromJson(json["southwest"]),
+    northeast:
+        json['northeast'] != null
+            ? Location.fromJson(json['northeast'] as Map<String, dynamic>)
+            : Location(lat: 0, lng: 0),
+    southwest:
+        json['southwest'] != null
+            ? Location.fromJson(json['southwest'] as Map<String, dynamic>)
+            : Location(lat: 0, lng: 0),
   );
 
   /// Converts this instance to a JSON map.
   Map<String, dynamic> toJson() => {
-    "northeast": northeast.toJson(),
-    "southwest": southwest.toJson(),
+    'northeast': northeast.toJson(),
+    'southwest': southwest.toJson(),
   };
 }
 
 /// Represents a geographical location with latitude and longitude coordinates.
 class Location {
   /// Creates a new instance of [Location].
-  ///
-  /// [lat] The latitude coordinate.
-  /// [lng] The longitude coordinate.
   Location({required this.lat, required this.lng});
 
   /// The latitude coordinate in decimal degrees.
@@ -210,11 +205,13 @@ class Location {
   double lng;
 
   /// Creates a [Location] instance from a JSON map.
-  factory Location.fromJson(Map<String, dynamic> json) =>
-      Location(lat: json["lat"].toDouble(), lng: json["lng"].toDouble());
+  factory Location.fromJson(Map<String, dynamic> json) => Location(
+    lat: (json['lat'] as num?)?.toDouble() ?? 0.0,
+    lng: (json['lng'] as num?)?.toDouble() ?? 0.0,
+  );
 
   /// Converts this instance to a JSON map.
-  Map<String, dynamic> toJson() => {"lat": lat, "lng": lng};
+  Map<String, dynamic> toJson() => {'lat': lat, 'lng': lng};
 }
 
 /// The type of location returned by the Google Maps Geocoding API.
@@ -234,31 +231,24 @@ enum LocationType {
 
 /// Maps between [LocationType] enum values and their string representations.
 final locationTypeValues = EnumValues({
-  "APPROXIMATE": LocationType.approximate,
-  "GEOMETRIC_CENTER": LocationType.geometricCenter,
-  "ROOFTOP": LocationType.roofTop,
-  "RANGE_INTERPOLATED": LocationType.rangeInterpolated,
+  'APPROXIMATE': LocationType.approximate,
+  'GEOMETRIC_CENTER': LocationType.geometricCenter,
+  'ROOFTOP': LocationType.roofTop,
+  'RANGE_INTERPOLATED': LocationType.rangeInterpolated,
 });
 
 /// A utility class for mapping between enum values and their string representations.
 class EnumValues<T> {
   /// Creates a new instance of [EnumValues].
-  ///
-  /// [map] The map of string values to enum values.
-  EnumValues(map)
-    : map = Map.from(map),
-      reverseMap = {
-        for (var v in map.values) v: map.keys.firstWhere((k) => map[k] == v),
-      };
+  EnumValues(this.map)
+    : reverseMap = {for (var entry in map.entries) entry.value: entry.key};
 
   /// The map of string values to enum values.
-  Map<String, T> map;
+  final Map<String, T> map;
 
   /// The map of enum values to string values.
-  Map<T, String> reverseMap;
+  final Map<T, String> reverseMap;
 
   /// Gets the reverse map of enum values to string values.
-  Map<T, String> get reverse {
-    return reverseMap;
-  }
+  Map<T, String> get reverse => reverseMap;
 }

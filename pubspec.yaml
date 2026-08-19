@@ -1,11 +1,20 @@
 name: geocoder_pro
-description: A powerful Flutter package for forward and reverse geocoding, enabling easy conversion between addresses and geographic coordinates with support for multiple geocoding providers.
-version: 1.0.3
-homepage: https://github.com/rohitsoni9/geocoder_pro.git
+description: A powerful Flutter package for forward and reverse geocoding with Google Maps and free OpenStreetMap (Nominatim), spatial distance, and address utilities.
+version: 1.1.0
+homepage: https://github.com/rohitsoni9/geocoder_pro
+repository: https://github.com/rohitsoni9/geocoder_pro
+issue_tracker: https://github.com/rohitsoni9/geocoder_pro/issues
+
+topics:
+  - geocoding
+  - reverse-geocoding
+  - google-maps
+  - openstreetmap
+  - geolocation
 
 environment:
-  sdk: ^3.7.2
-  flutter: ">=1.17.0"
+  sdk: ^3.7.0
+  flutter: ">=3.0.0"
 
 dependencies:
   flutter:
